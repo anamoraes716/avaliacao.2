@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Projetos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('AA.png') no-repeat center center fixed; 
+            background-size: cover;
+            margin: 0;
+            padding: 20px;
+            color: white; 
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        header {
+            background: #5e4b8b; 
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            width: 100%; 
+            max-width: 600px; 
+            margin-bottom: 20px; 
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none; 
+            width: 100%; 
+            max-width: 600px; 
+        }
+        .active {
+            display: block; 
+        }
+        h2 {
+            color: #5e4b8b; 
+            text-align: center; 
+        }
+        button {
+            background-color: #7a5d9d; 
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-top: 10px; 
+            width: 100%; 
+        }
+        button:hover {
+            background-color: #5e4b8b; 
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .project, .task {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0; 
+            background-color: rgba(255, 255, 255, 0.8); 
+            color: #333;
+        }
+        .profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .profile img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .datetime {
+            margin-bottom: 20px;
+            text-align: center;
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Gestão de Projetos</h1>
+    <div class="datetime" id="currentDatetime"></div> <!-- Div para data e hora -->
+</header>
+
+<div id="registerContainer" class="container active">
+    <h2>Tela de Cadastro</h2>
+    <div class="form-group">
+        <input type="text" id="registerUsername" placeholder="Usuário" required>
+    </div>
+    <div class="form-group">
+        <input type="password" id="registerPassword" placeholder="Senha" required>
+    </div>
+    <button onclick="register()">Cadastrar</button>
+    <button onclick="showLoginForm()">Já tenho conta</button>
+</div>
+
+<div id="loginContainer" class="container">
+    <h2>Tela de Autenticação</h2>
+    <div class="form-group">
+        <input type="text" id="loginUsername" placeholder="Usuário" required>
+    </div>
+    <div class="form-group">
+        <input type="password" id="loginPassword" placeholder="Senha" required>
+    </div>
+    <button onclick="login()">Entrar</button>
+    <button onclick="showRegisterForm()">Criar conta</button>
+</div>
+
+<div id="profileContainer" class="container">
+    <h2>Perfil do Gerente</h2>
+    <div class="profile">
+        <img id="profilePicture" src="" alt="Foto do Gerente" onerror="this.style.display='none'">
+        <div id="profileName"></div>
+        <input type="file" id="photoInput" accept="image/*" onchange="uploadPhoto()">
+    </div>
+    <button onclick="showProjectManagement()">Gerenciar Projetos</button>
+    <button onclick="logout()">Sair</button>
+</div>
+
+<div id="projectManagementContainer" class="container">
+    <h2>Projetos em Andamento</h2>
+    <div id="projects"></div>
+    <div class="form-group">
+        <input type="text" id="projectName" placeholder="Nome do Projeto" required>
+    </div>
+    <div class="form-group">
+        <input type="date" id="projectStartDate" required>
+        <input type="date" id="projectEndDate" required>
+    </div>
+    <button onclick="addProject()">Adicionar Projeto</button>
+    <button onclick="logout()">Sair</button> <!-- Botão de sair adicionado aqui -->
+</div>
+
+<div id="taskManagementContainer" class="container">
+    <h2>Tarefas do Projeto</h2>
+    <div id="taskDetails"></div>
+    <div class="form-group">
+        <input type="text" id="taskName" placeholder="Nome da Tarefa" required>
+    </div>
+    <div class="form-group">
+        <input type="date" id="taskStartDate" required>
+        <input type="date" id="taskEndDate" required>
+    </div>
+    <button onclick="addTask()">Adicionar Tarefa</button>
+    <button onclick="showProjectManagement()">Voltar aos Projetos</button>
+</div>
+
+<script>
+    let users = [];
+    let currentUser = null;
+    let projects = [];
+
+    function updateDateTime() {
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        document.getElementById('currentDatetime').textContent = now.toLocaleString('pt-BR', options);
+    }
+
+    function showContainer(containerId) {
+        document.querySelectorAll('.container').forEach(container => {
+            container.classList.remove('active');
+        });
+        document.getElementById(containerId).classList.add('active');
+    }
+
+    function showRegisterForm() {
+        showContainer('registerContainer');
+    }
+
+    function showLoginForm() {
+        showContainer('loginContainer');
+    }
+
+    function showProfile() {
+        document.getElementById('profileName').textContent = currentUser.username;
+        showContainer('profileContainer');
+    }
+
+    function showProjectManagement() {
+        showContainer('projectManagementContainer');
+        updateProjectList();
+    }
+
+    function showTaskManagement(projectIndex) {
+        showContainer('taskManagementContainer');
+        updateTaskList(projectIndex);
+    }
+
+    function register() {
+        const username = document.getElementById('registerUsername').value;
+        const password = document.getElementById('registerPassword').value;
+
+        if (users.some(user => user.username === username)) {
+            alert("Usuário já cadastrado!");
+            return;
+        }
+
+        users.push({ username, password });
+        alert("Cadastro realizado com sucesso!");
+        document.getElementById('registerUsername').value = '';
+        document.getElementById('registerPassword').value = '';
+        showLoginForm();
+    }
+
+    function login() {
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+
+        const user = users.find(user => user.username === username && user.password === password);
+        if (user) {
+            currentUser = user;
+            alert("Usuário autenticado!");
+            showProfile();
+        } else {
+            alert("Usuário ou senha inválidos!");
+        }
+    }
+
+    function uploadPhoto() {
+        const photoInput = document.getElementById('photoInput');
+        const profilePicture = document.getElementById('profilePicture');
+        
+        const file = photoInput.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePicture.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert("Por favor, selecione uma imagem válida.");
+        }
+    }
+
+    function addProject() {
+        const projectName = document.getElementById('projectName').value;
+        const startDate = document.getElementById('projectStartDate').value;
+        const endDate = document.getElementById('projectEndDate').value;
+
+        if (projectName && startDate && endDate) {
+            projects.push({ name: projectName, startDate, endDate, tasks: [] });
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectStartDate').value = '';
+            document.getElementById('projectEndDate').value = '';
+            updateProjectList();
+        } else {
+            alert("Preencha todos os campos do projeto.");
+        }
+    }
+
+    function updateProjectList() {
+        const projectContainer = document.getElementById('projects');
+        projectContainer.innerHTML = '';
+        projects.forEach((project, index) => {
+            projectContainer.innerHTML += `
+                <div class="project">
+                    ${project.name} - Início: ${project.startDate} - Fim: ${project.endDate} 
+                    <button onclick="removeProject(${index})">Excluir</button>
+                    <button onclick="showTaskManagement(${index})">Ver Tarefas</button>
+                </div>`;
+        });
+    }
+
+    function removeProject(index) {
+        projects.splice(index, 1);
+        updateProjectList();
+    }
+
+    function addTask() {
+        const taskName = document.getElementById('taskName').value;
+        const startDate = document.getElementById('taskStartDate').value;
+        const endDate = document.getElementById('taskEndDate').value;
+        const projectIndex = document.getElementById('taskDetails').dataset.projectIndex;
+
+        if (taskName && startDate && endDate && projectIndex !== undefined) {
+            projects[projectIndex].tasks.push({ name: taskName, startDate, endDate });
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskStartDate').value = '';
+            document.getElementById('taskEndDate').value = '';
+            updateTaskList(projectIndex);
+        } else {
+            alert("Preencha todos os campos da tarefa.");
+        }
+    }
+
+    function updateTaskList(projectIndex) {
+        const taskContainer = document.getElementById('taskDetails');
+        taskContainer.innerHTML = '';
+        taskContainer.dataset.projectIndex = projectIndex; 
+
+        const tasks = projects[projectIndex].tasks;
+        tasks.forEach((task, index) => {
+            taskContainer.innerHTML += `
+                <div class="task">
+                    ${task.name} - Início: ${task.startDate} - Fim: ${task.endDate} 
+                    <button onclick="removeTask(${projectIndex}, ${index})">Excluir</button>
+                </div>`;
+        });
+    }
+
+    function removeTask(projectIndex, taskIndex) {
+        projects[projectIndex].tasks.splice(taskIndex, 1);
+        updateTaskList(projectIndex);
+    }
+
+    function logout() {
+        alert("Desconectado com sucesso!");
+        currentUser = null;
+        projects = [];
+        showRegisterForm();
+    }
+
+
+    setInterval(updateDateTime, 1000);
+    updateDateTime(); // 
+
+</script>
+
+</body>
+</html>
